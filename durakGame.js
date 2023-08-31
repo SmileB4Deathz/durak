@@ -1,4 +1,4 @@
-const { MCTS } = require("./MCTSv1.js");
+const { MCTS } = require("https://raw.githubusercontent.com/SmileB4Deathz/durak/main/MCTSv1.js");
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Durak {
