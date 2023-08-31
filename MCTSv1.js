@@ -316,5 +316,3 @@ class Card {
         return this.type;
     }
 }
-
-module.exports = { MCTS }
