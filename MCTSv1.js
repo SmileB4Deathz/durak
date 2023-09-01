@@ -1,5 +1,3 @@
-
-
 class MCTSNode {
     constructor(moves, parent) {
         this.moves = moves
@@ -57,8 +55,6 @@ class MCTS {
         let bestMove = possibleMoves[this.getBestChildIndex(root)];
 
         this.game.setState(originalState)
-        //console.log(root);
-        //console.log("Win chance: " + (root.wins * 100) / root.visits + "%");
         console.log(root);
         const pv = this.getPv(root);
         return {move: bestMove, pv: pv, stats: {wins: root.wins, visits: root.visits}};
@@ -74,8 +70,8 @@ class MCTS {
             for (let i in root.children) {
                 const child = root.children[i]
                 const ni = child.visits
-                //const wi = (this.game.getPlayerTurn() == this.player) ? child.wins : -(child.wins)
-                const wi = child.wins;
+                const wi = (this.game.getPlayerTurn() == this.player) ? child.wins : -(child.wins)
+                //const wi = child.wins;
                 const ubc = this.computeUCB(wi, ni, c, Ni)
                 if (ubc > maxUBC) {
                     maxUBC = ubc
