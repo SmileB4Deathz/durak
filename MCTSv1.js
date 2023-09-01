@@ -55,7 +55,6 @@ class MCTS {
         let bestMove = possibleMoves[this.getBestChildIndex(root)];
 
         this.game.setState(originalState)
-        console.log(root);
         const pv = this.getPv(root);
         return {move: bestMove, pv: pv, stats: {wins: root.wins, visits: root.visits}};
     }
