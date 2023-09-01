@@ -1,4 +1,5 @@
 
+
 class MCTSNode {
     constructor(moves, parent) {
         this.moves = moves
@@ -57,10 +58,10 @@ class MCTS {
 
         this.game.setState(originalState)
         //console.log(root);
-        console.log("Win chance: " + (root.wins * 100) / root.visits + "%");
+        //console.log("Win chance: " + (root.wins * 100) / root.visits + "%");
         console.log(root);
-        this.getPv(root);
-        return bestMove;
+        const pv = this.getPv(root);
+        return {move: bestMove, pv: pv, stats: {wins: root.wins, visits: root.visits}};
     }
     selectNode(root) {
 
@@ -73,7 +74,8 @@ class MCTS {
             for (let i in root.children) {
                 const child = root.children[i]
                 const ni = child.visits
-                const wi = (this.game.getPlayerTurn() == this.player) ? child.wins : -(child.wins)
+                //const wi = (this.game.getPlayerTurn() == this.player) ? child.wins : -(child.wins)
+                const wi = child.wins;
                 const ubc = this.computeUCB(wi, ni, c, Ni)
                 if (ubc > maxUBC) {
                     maxUBC = ubc
@@ -166,13 +168,10 @@ class MCTS {
                 break;
             }
         }
-        console.log(pv);
+        return pv;
     }
 }
 
-const { MCTS } = require("./MCTStest.js");
-var Parallel = require('paralleljs');
-const MCTS2 = require("./mcts3").MCTS;
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Durak {
