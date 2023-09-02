@@ -55,8 +55,9 @@ class MCTS {
         let bestMove = possibleMoves[this.getBestChildIndex(root)];
 
         this.game.setState(originalState)
+        console.log(root);
         const pv = this.getPv(root);
-        return {move: bestMove, pv: pv, stats: {wins: root.wins, visits: root.visits}};
+        return { move: bestMove, pv: pv, stats: { wins: root.wins, visits: root.visits } };
     }
     selectNode(root) {
 
@@ -106,9 +107,10 @@ class MCTS {
 
     playout() {
         while (!this.game.gameOver()) {
-            const moves = this.game.moves()
-            const randomChoice = Math.floor(Math.random() * moves.length)
-            this.game.playMove(moves[randomChoice])
+            //const moves = this.game.moves()
+            //const randomChoice = Math.floor(Math.random() * moves.length)
+            const greedy = this.greedyMove(this.game);
+            this.game.playMove(greedy);
         }
         return this.game.winner()
     }
@@ -139,7 +141,7 @@ class MCTS {
         return (wi / ni) + c * Math.sqrt(Math.log(Ni) / ni)
     }
 
-    getBestChildIndex(node){
+    getBestChildIndex(node) {
         let maxWins = -Infinity
         let maxIndex = -1
         for (let i in node.children) {
@@ -159,14 +161,53 @@ class MCTS {
             let maxIndex = this.getBestChildIndex(root);
             pv.push(root.moves[maxIndex]);
             root = root.children[maxIndex];
-            if (root == undefined){
+            if (root == undefined) {
                 break;
             }
         }
         return pv;
     }
-}
 
+    lowestRankCard(cards) {
+        const quickSort = (arr) => {
+            if (arr.length <= 1) {
+                return arr;
+            }
+
+            let pivot = arr[0];
+            let leftArr = [];
+            let rightArr = [];
+
+            for (let i = 1; i < arr.length; i++) {
+                if (arr[i].Value < pivot.Value) {
+                    leftArr.push(arr[i]);
+                } else {
+                    rightArr.push(arr[i]);
+                }
+            }
+
+            return [...quickSort(leftArr), pivot, ...quickSort(rightArr)];
+        };
+
+        return quickSort(cards)[0];
+    }
+
+    greedyMove(game) {
+        const moves = game.moves();
+        if (moves.length === 1)
+            return moves[0];
+        return this.getGreedyMove(game)
+    }
+
+    getGreedyMove(game) {
+        const cards = game.moves().filter(card => (typeof card === "object"));
+        const trump = game.getTrump();
+        const noTrumpCards = cards.filter(card => card.Type != trump);
+        if (noTrumpCards.length === 0)
+            return this.lowestRankCard(cards);
+        return this.lowestRankCard(noTrumpCards);
+    }
+}
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Durak {
