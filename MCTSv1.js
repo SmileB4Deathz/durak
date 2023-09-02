@@ -201,6 +201,8 @@ class MCTS {
 
     getGreedyMove(game) {
         const cards = game.moves().filter(card => (typeof card === "object"));
+        const randomChoice = Math.floor(Math.random() * cards.length)
+        return cards[randomChoice];
         const trump = game.getTrump();
         const noTrumpCards = cards.filter(card => card.Type != trump);
         if (noTrumpCards.length === 0)
