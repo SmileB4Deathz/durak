@@ -256,6 +256,11 @@ class Durak {
         }
         //continue attack
         else if (this.state.attackCard == null) {
+            if (this.state.isTaking){
+                let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                    if (this.state.cardsOnTable.length >= this.state.playerCards[oppIndex].length)
+                        return(["pass"]);
+            }
             moves = this.state.playerCards[this.state.playerTurn].filter(card => this.state.cardsOnTable.some(tc => tc.Value === card.Value));
             moves.push("pass");
         }
@@ -305,15 +310,6 @@ class Durak {
                 break;
             default:
                 if (this.state.isTaking) {
-                    let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
-                    if (this.state.cardsOnTable.length >= this.state.playerCards[oppIndex].length) {
-                        let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
-                        this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
-                        this.state.isTaking = false;
-                        this.state.cardsOnTable = [];
-                        this.state.attackCard = null;
-                        return;
-                    }
                     this.state.cardsOnTable.push(move);
                     this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !this.sameCard(card, move));
                     if (this.state.playerCards[this.state.playerTurn].length === 0)
@@ -358,4 +354,5 @@ class Card {
         return this.Type;
     }
 }
+
 
