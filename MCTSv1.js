@@ -233,19 +233,10 @@ class Durak {
 
     getPlayerTurn() { return this.state.playerTurn }
 
-    getTrump() {return this.state.trump}
+    getTrump() { return this.state.trump }
 
     cloneState() {
         return structuredClone(this.state);
-        /*return {
-            playerCards: ,
-            playerTurn: this.state.playerTurn,
-            trump: this.state.trump,
-            attackCard: this.state.attackCard,
-            cardsOnTable: this.state.cardsOnTable,
-            winner: this.state.winner,
-            gameOver: this.state.gameOver
-        }*/
     }
 
     sameCard(c1, c2) {
@@ -273,9 +264,6 @@ class Durak {
             //if attack card is not a trump
             if (this.state.attackCard.Type !== this.state.trump) {
                 for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
-                    if (this.state.playerCards[this.state.playerTurn][i] == undefined) {
-                        console.log("WTF");
-                    }
                     let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
                     let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
                     if ((cardType === this.state.attackCard.Type && cardValue > this.state.attackCard.Value) || cardType === this.state.trump) {
@@ -300,15 +288,17 @@ class Durak {
     playMove(move) {
         switch (move) {
             case "pass":
-                this.state.cardsOnTable = [];
-                this.state.attackCard = null;
-                if (this.state.isTaking)
+                if (this.state.isTaking) {
+                    let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                    this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
                     this.state.isTaking = false;
+                }
                 else
                     this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                this.state.cardsOnTable = [];
+                this.state.attackCard = null;
                 break;
             case "take":
-                this.state.cardsOnTable.forEach(card => this.state.playerCards[this.state.playerTurn].push(card));
                 this.state.attackCard = null;
                 this.state.isTaking = true;
                 this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
@@ -316,7 +306,15 @@ class Durak {
             default:
                 if (this.state.isTaking) {
                     let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
-                    this.state.playerCards[oppIndex].push(move);
+                    if (this.state.cardsOnTable.length >= this.state.playerCards[oppIndex].length) {
+                        let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                        this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
+                        this.state.isTaking = false;
+                        this.state.cardsOnTable = [];
+                        this.state.attackCard = null;
+                        return;
+                    }
+                    this.state.cardsOnTable.push(move);
                     this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !this.sameCard(card, move));
                     if (this.state.playerCards[this.state.playerTurn].length === 0)
                         this.state.gameOver = true;
@@ -360,3 +358,4 @@ class Card {
         return this.Type;
     }
 }
+
