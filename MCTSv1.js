@@ -231,6 +231,8 @@ class Durak {
 
     getPlayerTurn() { return this.state.playerTurn }
 
+    getTrump() {return this.state.trump}
+
     cloneState() {
         return structuredClone(this.state);
         /*return {
