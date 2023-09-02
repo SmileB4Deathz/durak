@@ -1,6 +1,7 @@
 const { MCTS } = require("https://raw.githubusercontent.com/SmileB4Deathz/durak/main/MCTSv1.js");
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 class Durak {
 
     constructor(playerCards, playerTurn, trump, cardsOnTable, attackCard = null) {
@@ -22,21 +23,14 @@ class Durak {
 
     getPlayerTurn() { return this.state.playerTurn }
 
+    getTrump() { return this.state.trump }
+
     cloneState() {
         return structuredClone(this.state);
-        /*return {
-            playerCards: ,
-            playerTurn: this.state.playerTurn,
-            trump: this.state.trump,
-            attackCard: this.state.attackCard,
-            cardsOnTable: this.state.cardsOnTable,
-            winner: this.state.winner,
-            gameOver: this.state.gameOver
-        }*/
     }
 
     sameCard(c1, c2) {
-        if (c1.value === c2.value && c1.type === c2.type) {
+        if (c1.Value === c2.Value && c1.Type === c2.Type) {
             return true;
         }
         return false;
@@ -52,20 +46,17 @@ class Durak {
         }
         //continue attack
         else if (this.state.attackCard == null) {
-            moves = this.state.playerCards[this.state.playerTurn].filter(card => this.state.cardsOnTable.some(tc => tc.value === card.value));
+            moves = this.state.playerCards[this.state.playerTurn].filter(card => this.state.cardsOnTable.some(tc => tc.Value === card.Value));
             moves.push("pass");
         }
         //defence
         else if (this.state.attackCard != null) {
             //if attack card is not a trump
-            if (this.state.attackCard.type !== this.state.trump) {
+            if (this.state.attackCard.Type !== this.state.trump) {
                 for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
-                    if (this.state.playerCards[this.state.playerTurn][i] == undefined) {
-                        console.log("WTF");
-                    }
-                    let cardType = this.state.playerCards[this.state.playerTurn][i].type;
-                    let cardValue = this.state.playerCards[this.state.playerTurn][i].value;
-                    if ((cardType === this.state.attackCard.type && cardValue > this.state.attackCard.value) || cardType === this.state.trump) {
+                    let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
+                    let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
+                    if ((cardType === this.state.attackCard.Type && cardValue > this.state.attackCard.Value) || cardType === this.state.trump) {
                         moves.push(this.state.playerCards[this.state.playerTurn][i]);
                     }
                 }
@@ -73,9 +64,9 @@ class Durak {
             //if attack card is a trump
             else {
                 for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
-                    let cardType = this.state.playerCards[this.state.playerTurn][i].type;
-                    let cardValue = this.state.playerCards[this.state.playerTurn][i].value;
-                    if (cardType === this.state.attackCard.type && cardValue > this.state.attackCard.value)
+                    let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
+                    let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
+                    if (cardType === this.state.attackCard.Type && cardValue > this.state.attackCard.Value)
                         moves.push(this.state.playerCards[this.state.playerTurn][i]);
                 }
             }
@@ -87,15 +78,17 @@ class Durak {
     playMove(move) {
         switch (move) {
             case "pass":
-                this.state.cardsOnTable = [];
-                this.state.attackCard = null;
-                if (this.state.isTaking)
+                if (this.state.isTaking) {
+                    let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                    this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
                     this.state.isTaking = false;
+                }
                 else
                     this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                this.state.cardsOnTable = [];
+                this.state.attackCard = null;
                 break;
             case "take":
-                this.state.cardsOnTable.forEach(card => this.state.playerCards[this.state.playerTurn].push(card));
                 this.state.attackCard = null;
                 this.state.isTaking = true;
                 this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
@@ -103,7 +96,15 @@ class Durak {
             default:
                 if (this.state.isTaking) {
                     let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
-                    this.state.playerCards[oppIndex].push(move);
+                    if (this.state.cardsOnTable.length >= this.state.playerCards[oppIndex].length) {
+                        let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                        this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
+                        this.state.isTaking = false;
+                        this.state.cardsOnTable = [];
+                        this.state.attackCard = null;
+                        return;
+                    }
+                    this.state.cardsOnTable.push(move);
                     this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !this.sameCard(card, move));
                     if (this.state.playerCards[this.state.playerTurn].length === 0)
                         this.state.gameOver = true;
@@ -134,16 +135,17 @@ class Durak {
 
 
 class Card {
-    constructor(value, type) {
-        this.value = value;
-        this.type = type;
+    constructor(Value, Type) {
+        this.Value = Value;
+        this.Type = Type;
     }
 
     getValue() {
-        return this.value;
+        return this.Value;
     }
 
     getType() {
-        return this.type;
+        return this.Type;
     }
 }
+
