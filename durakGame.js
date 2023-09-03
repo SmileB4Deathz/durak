@@ -1,6 +1,3 @@
-const { MCTS } = require("./MCTSv1.js");
-var Parallel = require('paralleljs');
-const MCTS2 = require("./mcts3").MCTS;
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Durak {
@@ -33,7 +30,10 @@ class Durak {
         return structuredClone(this.state);
     }
 
-    sameCard(c1, c2) {
+    static sameCard(c1, c2) {
+        if (c1 == undefined || c2 == undefined){
+            console.log(this.state)
+        }
         if (c1.Value === c2.Value && c1.Type === c2.Type) {
             return true;
         }
@@ -85,18 +85,22 @@ class Durak {
     }
 
     playMove(move) {
+        if (!move)
+            console.log(1)
         switch (move) {
             case "pass":
                 if (this.state.isTaking) {
                     let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
                     this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
                     this.state.isTaking = false;
+                    this.#takeCards(this.state.playerTurn);
                 }
-                else
+                else {
+                    this.#takeCards(this.state.playerTurn);
                     this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                }
                 this.state.cardsOnTable = [];
                 this.state.attackCards = [];
-                this.#takeCards();
                 break;
             case "take":
                 this.state.attackCards = [];
@@ -106,15 +110,15 @@ class Durak {
             default:
                 if (this.state.isTaking) {
                     this.state.cardsOnTable.push(move);
-                    this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !this.sameCard(card, move));
-                    if (this.state.playerCards[this.state.playerTurn].length === 0)
+                    this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
+                    if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.endGame)
                         this.state.gameOver = true;
                     return;
                 }
 
                 this.state.cardsOnTable.push(move);
-                this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !this.sameCard(card, move));
-                if (this.state.playerCards[this.state.playerTurn].length === 0) {
+                this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
+                if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.endGame) {
                     this.state.winner = this.state.playerTurn;
                     this.state.gameOver = true;
                     return;
@@ -136,28 +140,37 @@ class Durak {
         }
     }
 
-    #takeCards() {
-        if (this.state.playerTurn) {
+    #takeCards(first) {
+        if (!first) {
             if (this.state.playerCards[0].length < 6)
-                take(0);
+                take(0, this.state);
             if (this.state.playerCards[1].length < 6)
-                take(1);
+                take(1, this.state);
             return;
         }
 
         if (this.state.playerCards[1].length < 6)
-            take(1);
+            take(1, this.state);
         if (this.state.playerCards[0].length < 6)
-            take(0);
+            take(0, this.state);
 
-        function take(player){
-            const nrCardsToTake = 6 - this.state.playerCards[player].length;
+        function take(player, state) {
+            if (state.endGame)
+                return;
+            const nrCardsToTake = 6 - state.playerCards[player].length;
             for (let i = 0; i < nrCardsToTake; i++) {
-                const randomCard = this.state.deck[Math.floor(Math.random() * this.state.deck.length)];
-                this.state.playerCards[player].push(randomCard);
-                this.state.deck = this.state.deck.filter(card => !this.sameCard(card, randomCard));
-                if (this.state.deck.length === 0){
-                    if (this.state.)
+                const randomCard = state.deck[Math.floor(Math.random() * state.deck.length)];
+                if (randomCard == undefined)
+                console.log(1)
+                state.playerCards[player].push(randomCard);
+                state.deck = state.deck.filter(card => !Durak.sameCard(card, randomCard));
+                if (state.deck.length === 0) {
+                    if (state.lowerTrump == null){
+                        state.endGame = true;
+                        return;
+                    }
+                    state.deck.push(state.lowerTrump)
+                    state.lowerTrump = null;                   
                 }
             }
         }
@@ -186,10 +199,10 @@ class Card {
     }
 }
 
+module.exports = {Durak, Card};
 
-
-
-
+const { Durak, Card } = require("./durak.js");
+const { MCTS } = require("./MCTSv1.js");
 
 
 let six0 = new Card(6, 0);
@@ -299,13 +312,16 @@ console.log("Game loaded");
     "isTaking": false
 }*/
 
-let p1Cards = [six0, seven0, ace0];
-let p2Cards = [seven1];
-let durak = new Durak([p1Cards, p2Cards], 0, 0, [six1, six2], [six1, six2]);
+let p1Cards = [six1, seven0];
+let p2Cards = [seven1, six2];
+let lowerTrump = {Value: 14, Type: 0}
+deck = [six3, seven0, king1];
+//playerCards, playerTurn, trump, cardsOnTable, attackCards = [], lowerTrump = null, deck = []
+let durak = new Durak([p1Cards, p2Cards], 0, 0, [], [], lowerTrump, deck);
 //let durak = new Durak();
 //durak.setState(obj);
-const cards = durak.moves().filter(card => (typeof card === "object"));
-console.log(cards);
+/*const cards = durak.moves().filter(card => (typeof card === "object"));
+console.log(cards);*/
 
 
 //console.log(durak.moves());
@@ -329,7 +345,7 @@ console.log(cards);
 
 const games = getPossibleGames();
 console.log(games);*/
-let bot = new MCTS(durak, 0, 50000, undefined);
+let bot = new MCTS(durak, 0, 10000, undefined);
 let result = bot.selectMove();
 
 console.log("Win chance: " + (result.stats.wins * 100) / result.stats.visits + "%");
@@ -364,3 +380,4 @@ function pvToSting(pv) {
 }
 
 console.log("Breakpoint");
+//6🔸,take,pass,6♠,take,pass,7❤️,take,pass,A❤️
