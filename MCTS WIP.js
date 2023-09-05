@@ -7,11 +7,197 @@ c){for(;null!=a;)a.visits+=1,a.wins+=c,a=a.parent}selectRandomUnexpandedChild(a)
 a=a.children[b];if(void 0==a)break}return c}lowestRankCard(a){const c=b=>{if(1>=b.length)return b;let d=b[0],e=[],f=[];for(let g=1;g<b.length;g++)b[g].Value<d.Value?e.push(b[g]):f.push(b[g]);return[...c(e),d,...c(f)]};return c(a)[0]}greedyMove(){const a=this.game.moves();return 2>a.length?a[0]:this.getGreedyMove()}getGreedyMove(){this.game.moves();const a=this.game.moves().filter(d=>"object"===typeof d),c=this.game.getTrump(),b=a.filter(d=>d.Type!=c);return 0===b.length?this.lowestRankCard(a):this.lowestRankCard(b)}}
 ;
 //GAME
-class Durak{constructor(b,a,d,c,e=[],f=null,g=[]){this.state={playerCards:b,playerTurn:a,trump:d,cardsOnTable:c,attackCards:e,deck:g,lowerTrump:f,endGame:!1,winner:-1,gameOver:!1,isTaking:!1}}getState(){return this.state}setState(b){this.state=b}getPlayerTurn(){return this.state.playerTurn}getTrump(){return this.state.trump}cloneState(){return structuredClone(this.state)}static sameCard(b,a){return b.Value===a.Value&&b.Type===a.Type?!0:!1}moves(){let b=[];if(this.state.gameOver)return b;if(0===this.state.cardsOnTable.length)b=
-this.state.playerCards[this.state.playerTurn];else if(0===this.state.attackCards.length){if(this.state.isTaking&&this.state.cardsOnTable.length>=this.state.playerCards[0===this.state.playerTurn?1:0].length)return["pass"];b=this.state.playerCards[this.state.playerTurn].filter(c=>this.state.cardsOnTable.some(e=>e.Value===c.Value));b.push("pass")}else if(0!==this.state.attackCards.length){if(this.state.attackCards[0].Type!==this.state.trump)for(var a=0;a<this.state.playerCards[this.state.playerTurn].length;a++){var d=
-this.state.playerCards[this.state.playerTurn][a].Type;let c=this.state.playerCards[this.state.playerTurn][a].Value;(d===this.state.attackCards[0].Type&&c>this.state.attackCards[0].Value||d===this.state.trump)&&b.push(this.state.playerCards[this.state.playerTurn][a])}else for(a=0;a<this.state.playerCards[this.state.playerTurn].length;a++)d=this.state.playerCards[this.state.playerTurn][a].Value,this.state.playerCards[this.state.playerTurn][a].Type===this.state.attackCards[0].Type&&d>this.state.attackCards[0].Value&&
-b.push(this.state.playerCards[this.state.playerTurn][a]);b.push("take")}return b}playMove(b){switch(b){case "pass":if(this.state.isTaking){let a=0===this.state.playerTurn?1:0;this.state.cardsOnTable.forEach(d=>this.state.playerCards[a].push(d));this.state.isTaking=!1;this.takeCards(this.state.playerTurn)}else this.takeCards(this.state.playerTurn),this.state.playerTurn=0===this.state.playerTurn?1:0;this.state.cardsOnTable=[];this.state.attackCards=[];break;case "take":this.state.attackCards=[];this.state.isTaking=
-!0;this.state.playerTurn=0===this.state.playerTurn?1:0;break;default:this.state.isTaking?(this.state.cardsOnTable.push(b),this.state.playerCards[this.state.playerTurn]=this.state.playerCards[this.state.playerTurn].filter(a=>!Durak.sameCard(a,b)),0===this.state.playerCards[this.state.playerTurn].length&&this.state.endGame&&(this.state.gameOver=!0)):(this.state.cardsOnTable.push(b),this.state.playerCards[this.state.playerTurn]=this.state.playerCards[this.state.playerTurn].filter(a=>!Durak.sameCard(a,
-b)),0===this.state.playerCards[this.state.playerTurn].length&&this.state.endGame?(this.state.winner=this.state.playerTurn,this.state.gameOver=!0):0===this.state.attackCards.length?(this.state.attackCards.push(b),this.state.playerTurn=0===this.state.playerTurn?1:0):1===this.state.attackCards.length?(this.state.attackCards.shift(),this.state.playerTurn=0===this.state.playerTurn?1:0):this.state.attackCards.shift())}}takeCards(b){function a(d,c){if(!c.endGame){var e=6-c.playerCards[d].length;for(let f=
-0;f<e;f++)if(c.playerCards[d].push(c.deck[0]),c.deck.shift(),0===c.deck.length){if(null==c.lowerTrump){c.endGame=!0;break}c.deck.push(c.lowerTrump);c.lowerTrump=null}}}b?(6>this.state.playerCards[1].length&&a(1,this.state),6>this.state.playerCards[0].length&&a(0,this.state)):(6>this.state.playerCards[0].length&&a(0,this.state),6>this.state.playerCards[1].length&&a(1,this.state))}gameOver(){return this.state.gameOver}winner(){return this.state.winner}}
-class Card{constructor(b,a){this.Value=b;this.Type=a}getValue(){return this.Value}getType(){return this.Type}};
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
+class Durak {
+
+    constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], lowerTrump = null, deck = []) {
+        this.state = {
+            playerCards: playerCards,
+            playerTurn: playerTurn,
+            trump: trump,
+            cardsOnTable: cardsOnTable,
+            attackCards: attackCards,
+            deck: deck,
+            lowerTrump: lowerTrump,
+            endGame: false,
+            winner: -1,
+            gameOver: false,
+            isTaking: false
+        }
+    }
+
+    getState() { return this.state }
+
+    setState(state) { this.state = state }
+
+    getPlayerTurn() { return this.state.playerTurn }
+
+    getTrump() { return this.state.trump }
+
+    cloneState() {
+        return structuredClone(this.state);
+    }
+
+    static sameCard(c1, c2) {
+        if (c1.Value === c2.Value && c1.Type === c2.Type) {
+            return true;
+        }
+        return false;
+    }
+
+    moves() {
+        let moves = [];
+        if (this.state.gameOver)
+            return moves;
+        //first attack
+        else if (this.state.cardsOnTable.length === 0) {
+            moves = this.state.playerCards[this.state.playerTurn];
+        }
+        //continue attack
+        else if (this.state.attackCards.length === 0 || this.state.isTaking) {
+            if (this.state.isTaking) {
+                let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                if (this.state.cardsOnTable.length >= this.state.playerCards[oppIndex].length)
+                    return (["pass"]);
+            }
+            moves = this.state.playerCards[this.state.playerTurn].filter(card => this.state.cardsOnTable.some(tc => tc.Value === card.Value));
+            moves.push("pass");
+        }
+        //defence
+        else if (this.state.attackCards.length !== 0) {
+            //if attack card is not a trump
+            if (this.state.attackCards[0].Type !== this.state.trump) {
+                for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
+                    let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
+                    let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
+                    if ((cardType === this.state.attackCards[0].Type && cardValue > this.state.attackCards[0].Value) || cardType === this.state.trump) {
+                        moves.push(this.state.playerCards[this.state.playerTurn][i]);
+                    }
+                }
+            }
+            //if attack card is a trump
+            else {
+                for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
+                    let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
+                    let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
+                    if (cardType === this.state.attackCards[0].Type && cardValue > this.state.attackCards[0].Value)
+                        moves.push(this.state.playerCards[this.state.playerTurn][i]);
+                }
+            }
+            moves.push("take");
+        }
+        return moves;
+    }
+
+    playMove(move) {
+        switch (move) {
+            case "pass":
+                if (this.state.isTaking) {
+                    let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                    this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
+                    this.state.isTaking = false;
+                    this.takeCards(this.state.playerTurn);
+                }
+                else {
+                    this.takeCards(this.state.playerTurn);
+                    this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                }
+                this.state.cardsOnTable = [];
+                this.state.attackCards = [];
+                break;
+            case "take":
+                this.state.attackCards = [];
+                this.state.isTaking = true;
+                this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                break;
+            default:
+                if (this.state.isTaking) {
+                    this.state.cardsOnTable.push(move);
+                    this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
+                    if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.endGame)
+                        this.state.gameOver = true;
+                    return;
+                }
+
+                this.state.cardsOnTable.push(move);
+                this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
+                if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.endGame) {
+                    this.state.winner = this.state.playerTurn;
+                    this.state.gameOver = true;
+                    return;
+                }
+
+                //multiple attack cards on the table
+                if (this.state.attackCards.length === 0) {
+                    this.state.attackCards.push(move);
+                    this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                    return;
+                }
+                else if (this.state.attackCards.length === 1) {
+                    this.state.attackCards.shift();
+                    this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                    return;
+                }
+                this.state.attackCards.shift();
+                break;
+        }
+    }
+
+    takeCards(first) {
+        if (!first) {
+            if (this.state.playerCards[0].length < 6)
+                take(0, this.state);
+            if (this.state.playerCards[1].length < 6)
+                take(1, this.state);
+            return;
+        }
+
+        if (this.state.playerCards[1].length < 6)
+            take(1, this.state);
+        if (this.state.playerCards[0].length < 6)
+            take(0, this.state);
+
+        function take(player, state) {
+            if (state.endGame)
+                return;
+            const nrCardsToTake = 6 - state.playerCards[player].length;
+            for (let i = 0; i < nrCardsToTake; i++) {
+                //const randomCard = state.deck[Math.floor(Math.random() * state.deck.length)];
+                const randomCard = state.deck[0];
+                state.playerCards[player].push(randomCard);
+                state.deck.shift();
+                if (state.deck.length === 0) {
+                    if (state.lowerTrump == null){
+                        state.endGame = true;
+                        return;
+                    }
+                    state.deck.push(state.lowerTrump)
+                    state.lowerTrump = null;                   
+                }
+            }
+        }
+    }
+
+    gameOver() {
+        return this.state.gameOver;
+    }
+    winner() { return this.state.winner }
+}
+
+
+
+class Card {
+    constructor(Value, Type) {
+        this.Value = Value;
+        this.Type = Type;
+    }
+
+    getValue() {
+        return this.Value;
+    }
+
+    getType() {
+        return this.Type;
+    }
+}
