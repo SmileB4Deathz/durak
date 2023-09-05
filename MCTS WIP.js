@@ -9,6 +9,8 @@ a=a.children[b];if(void 0==a)break}return c}lowestRankCard(a){const c=b=>{if(1>=
 //GAME
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
 class Durak {
 
     constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], lowerTrump = null, deck = []) {
@@ -69,11 +71,14 @@ class Durak {
             //if attack card is not a trump
             if (this.state.attackCards[0].Type !== this.state.trump) {
                 for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
-                    let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
-                    let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
-                    if ((cardType === this.state.attackCards[0].Type && cardValue > this.state.attackCards[0].Value) || cardType === this.state.trump) {
-                        moves.push(this.state.playerCards[this.state.playerTurn][i]);
+                    try {
+                        let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
+                        let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
+                        if ((cardType === this.state.attackCards[0].Type && cardValue > this.state.attackCards[0].Value) || cardType === this.state.trump) {
+                            moves.push(this.state.playerCards[this.state.playerTurn][i]);
+                        }
                     }
+                    catch(e) {console.log(1)}
                 }
             }
             //if attack card is a trump
@@ -87,6 +92,8 @@ class Durak {
             }
             moves.push("take");
         }
+        if (moves.includes(undefined))
+            console.log(1);
         return moves;
     }
 
@@ -163,18 +170,18 @@ class Durak {
                 return;
             const nrCardsToTake = 6 - state.playerCards[player].length;
             for (let i = 0; i < nrCardsToTake; i++) {
-                //const randomCard = state.deck[Math.floor(Math.random() * state.deck.length)];
-                const randomCard = state.deck[0];
-                state.playerCards[player].push(randomCard);
-                state.deck.shift();
                 if (state.deck.length === 0) {
-                    if (state.lowerTrump == null){
+                    if (state.lowerTrump == null) {
                         state.endGame = true;
                         return;
                     }
                     state.deck.push(state.lowerTrump)
-                    state.lowerTrump = null;                   
+                    state.lowerTrump = null;
                 }
+                //const randomCard = state.deck[Math.floor(Math.random() * state.deck.length)];
+                const randomCard = state.deck[0];
+                state.playerCards[player].push(randomCard);
+                state.deck.shift();
             }
         }
     }
