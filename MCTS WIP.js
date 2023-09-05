@@ -1,11 +1,221 @@
 //MCTS
-class MCTSNode{constructor(a,c){this.moves=a;this.parent=c;this.wins=this.visits=0;this.numUnexpandedMoves=a.length;this.children=Array(this.numUnexpandedMoves).fill(null)}}
-class MCTS{constructor(a,c,b,d){this.game=a;this.player=c;this.iterations=b;this.exploration=d;void 0==this.iterations&&(this.iterations=500);void 0==this.exploration&&(this.exploration=1.41)}selectMove(){var a=this.game.cloneState(),c=this.game.moves();const b=new MCTSNode(c,null);for(let e=0;e<this.iterations;e++){this.game.setState(a);var d=this.game.cloneState();this.game.setState(d);d=this.selectNode(b);this.game.gameOver()&&this.game.winner()!=this.player&&-1!=this.game.winner()&&(d.parent.wins=
-Number.MIN_SAFE_INTEGER);d=this.expandNode(d);this.playout(d);let f;f=this.game.winner()==this.player?1:0;this.backprop(d,f)}c=c[this.getBestChildIndex(b)];this.game.setState(a);console.log(b);a=this.getPv(b);return{move:c,pv:a,stats:{wins:b.wins,visits:b.visits}}}selectNode(a){const c=this.exploration;for(;0==a.numUnexpandedMoves;){var b=-Infinity;let f=-1,g=a.visits;for(let h in a.children){var d=a.children[h],e=d.visits;d=this.game.getPlayerTurn()==this.player?d.wins:-d.wins;e=this.computeUCB(d,
-e,c,g);e>b&&(b=e,f=h)}b=this.game.moves();this.game.playMove(b[f]);a=a.children[f];if(this.game.gameOver())break}return a}expandNode(a){if(this.game.gameOver())return a;var c=this.game.moves();const b=this.selectRandomUnexpandedChild(a);void 0==c[b]&&console.log(this.game);this.game.playMove(c[b]);c=this.game.moves();c=new MCTSNode(c,a);a.children[b]=c;--a.numUnexpandedMoves;return c}playout(){for(;!this.game.gameOver();){const a=this.greedyMove();this.game.playMove(a)}return this.game.winner()}backprop(a,
-c){for(;null!=a;)a.visits+=1,a.wins+=c,a=a.parent}selectRandomUnexpandedChild(a){const c=Math.floor(Math.random()*a.numUnexpandedMoves);let b=-1;for(let d in a.children)if(null==a.children[d]&&(b+=1),b==c)return d}computeUCB(a,c,b,d){return a/c+b*Math.sqrt(Math.log(d)/c)}getBestChildIndex(a){let c=-Infinity,b=-1;for(let d in a.children){const e=a.children[d];null!=e&&e.wins>c&&(c=e.wins,b=d)}return b}getPv(a){const c=[];for(;0!=a.children.length;){let b=this.getBestChildIndex(a);c.push(a.moves[b]);
-a=a.children[b];if(void 0==a)break}return c}lowestRankCard(a){const c=b=>{if(1>=b.length)return b;let d=b[0],e=[],f=[];for(let g=1;g<b.length;g++)b[g].Value<d.Value?e.push(b[g]):f.push(b[g]);return[...c(e),d,...c(f)]};return c(a)[0]}greedyMove(){const a=this.game.moves();return 2>a.length?a[0]:this.getGreedyMove()}getGreedyMove(){this.game.moves();const a=this.game.moves().filter(d=>"object"===typeof d),c=this.game.getTrump(),b=a.filter(d=>d.Type!=c);return 0===b.length?this.lowestRankCard(a):this.lowestRankCard(b)}}
-;
+
+class MCTSNode {
+    constructor(moves, parent) {
+        this.moves = moves
+        this.parent = parent
+        this.visits = 0
+        this.wins = 0
+        this.numUnexpandedMoves = moves.length
+        this.children = new Array(this.numUnexpandedMoves).fill(null) //temporary store move for debugging purposes
+    }
+}
+
+
+class MCTS {
+    constructor(game, player, iterations, exploration) {
+        this.game = game
+        this.player = player
+        this.iterations = iterations
+        this.exploration = exploration
+
+        if (this.iterations == undefined) {
+            this.iterations = 500
+        }
+        if (this.exploration == undefined) {
+            this.exploration = 1.41
+        }
+    }
+
+    selectMove() {
+        const originalState = this.game.cloneState()
+        const possibleMoves = this.game.moves()
+        const root = new MCTSNode(possibleMoves, null)
+
+        for (let i = 0; i < this.iterations; i++) {
+            this.game.setState(originalState)
+            const clonedState = this.game.cloneState()
+            this.game.setState(clonedState)
+
+            let selectedNode = this.selectNode(root)
+            //if selected node is terminal and we lost, make sure we never choose that move
+            if (this.game.gameOver()) {
+                if (this.game.winner() != this.player && this.game.winner() != -1) {
+                    selectedNode.parent.wins = Number.MIN_SAFE_INTEGER
+                }
+            }
+            let expandedNode = this.expandNode(selectedNode)
+            this.playout(expandedNode)
+
+            let reward;
+            if (this.game.winner() == this.player) { reward = 1 }
+            else { reward = 0 }
+            this.backprop(expandedNode, reward)
+        }
+
+        //choose move with most wins
+        let bestMove = possibleMoves[this.getBestChildIndex(root)];
+
+        this.game.setState(originalState)
+        console.log(root);
+        const pv = this.getPv(root);
+        return { move: bestMove, pv: pv, stats: { wins: root.wins, visits: root.visits } };
+    }
+    selectNode(root) {
+
+        const c = this.exploration
+
+        while (root.numUnexpandedMoves == 0) {
+            let maxUBC = -Infinity
+            let maxIndex = -1
+            let Ni = root.visits
+            for (let i in root.children) {
+                const child = root.children[i]
+                const ni = child.visits
+                const wi = (this.game.getPlayerTurn() == this.player) ? child.wins : -(child.wins)
+                //const wi = child.wins;
+                const ubc = this.computeUCB(wi, ni, c, Ni)
+                if (ubc > maxUBC) {
+                    maxUBC = ubc
+                    maxIndex = i
+                }
+            }
+            const moves = this.game.moves()
+            this.game.playMove(moves[maxIndex])
+
+            if (this.game.gameOver()) {
+                return root
+            }
+
+            root = root.children[maxIndex]
+        }
+        return root
+    }
+
+    expandNode(node) {
+        if (this.game.gameOver()) {
+            return node
+        }
+        let moves = this.game.moves()
+        const childIndex = this.selectRandomUnexpandedChild(node)
+        this.game.playMove(moves[childIndex])
+
+        moves = this.game.moves()
+        const newNode = new MCTSNode(moves, node)
+        node.children[childIndex] = newNode
+        node.numUnexpandedMoves -= 1
+
+        return newNode
+    }
+
+    playout() {
+        const iters = 0;
+        while (!this.game.gameOver()) {
+            if (iters > 1000)
+                debugger;
+            //const moves = this.game.moves()
+            //const randomChoice = Math.floor(Math.random() * moves.length)
+            const greedy = this.greedyMove();
+            this.game.playMove(greedy);
+        }
+        return this.game.winner()
+    }
+    backprop(node, reward) {
+        while (node != null) {
+            node.visits += 1
+            node.wins += reward
+            node = node.parent
+        }
+    }
+
+    // returns index of a random unexpanded child of node
+    selectRandomUnexpandedChild(node) {
+        const choice = Math.floor(Math.random() * node.numUnexpandedMoves) //expand random nth unexpanded node
+        let count = -1
+        for (let i in node.children) {
+            const child = node.children[i]
+            if (child == null) {
+                count += 1
+            }
+            if (count == choice) {
+                return i
+            }
+        }
+    }
+
+    computeUCB(wi, ni, c, Ni) {
+        return (wi / ni) + c * Math.sqrt(Math.log(Ni) / ni)
+    }
+
+    getBestChildIndex(node) {
+        let maxWins = -Infinity
+        let maxIndex = -1
+        for (let i in node.children) {
+            const child = node.children[i]
+            if (child == null) { continue }
+            if (child.wins > maxWins) {
+                maxWins = child.wins
+                maxIndex = i
+            }
+        }
+        return maxIndex;
+    }
+
+    getPv(root) {
+        const pv = [];
+        while (root.children.length != 0) {
+            let maxIndex = this.getBestChildIndex(root);
+            pv.push(root.moves[maxIndex]);
+            root = root.children[maxIndex];
+            if (root == undefined) {
+                break;
+            }
+        }
+        return pv;
+    }
+
+    lowestRankCard(cards) {
+        const quickSort = (arr) => {
+            if (arr.length <= 1) {
+                return arr;
+            }
+
+            let pivot = arr[0];
+            let leftArr = [];
+            let rightArr = [];
+
+            for (let i = 1; i < arr.length; i++) {
+                if (arr[i].Value < pivot.Value) {
+                    leftArr.push(arr[i]);
+                } else {
+                    rightArr.push(arr[i]);
+                }
+            }
+
+            return [...quickSort(leftArr), pivot, ...quickSort(rightArr)];
+        };
+
+        return quickSort(cards)[0];
+    }
+
+    greedyMove() {
+        const moves = this.game.moves();
+        if (moves.length < 2)
+            return moves[0];
+        return this.getGreedyMove()
+    }
+
+    getGreedyMove() {
+        const moves = this.game.moves();
+        const cards = this.game.moves().filter(card => (typeof card === "object"));
+        const randomChoice = Math.floor(Math.random() * cards.length)
+        const trump = this.game.getTrump();
+        const noTrumpCards = cards.filter(card => card.Type != trump);
+        if (noTrumpCards.length === 0)
+            return this.lowestRankCard(cards);
+        return this.lowestRankCard(noTrumpCards);
+    }
+}
 //GAME
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
