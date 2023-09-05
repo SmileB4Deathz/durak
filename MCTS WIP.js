@@ -119,7 +119,6 @@ class MCTS {
             //const randomChoice = Math.floor(Math.random() * moves.length)
             const greedy = this.greedyMove(this.game);
             this.game.playMove(greedy);
-            return;
         }
         return this.game.winner()
     }
@@ -219,7 +218,6 @@ class MCTS {
         return this.lowestRankCard(noTrumpCards);
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Durak {
