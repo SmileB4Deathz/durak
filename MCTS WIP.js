@@ -113,7 +113,7 @@ class MCTS {
     playout() {
         const iters = 0;
         while (!this.game.gameOver()) {
-            if (iters > 1000);
+            if (iters > 1000)
                 debugger;
             //const moves = this.game.moves()
             //const randomChoice = Math.floor(Math.random() * moves.length)
@@ -219,7 +219,6 @@ class MCTS {
         return this.lowestRankCard(noTrumpCards);
     }
 }
-
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
