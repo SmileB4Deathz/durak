@@ -223,9 +223,11 @@ class MCTS {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
 class Durak {
 
-    constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], lowerTrump = null, deck = []) {
+    constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], deck = [], lowerTrump = null) {
         this.state = {
             playerCards: playerCards,
             playerTurn: playerTurn,
@@ -272,7 +274,7 @@ class Durak {
         else if (this.state.attackCards.length === 0 || this.state.isTaking) {
             if (this.state.isTaking) {
                 let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
-                if (this.state.cardsOnTable.length >= this.state.playerCards[oppIndex].length)
+                if (this.state.attackCards.length >= this.state.playerCards[oppIndex].length)
                     return (["pass"]);
             }
             moves = this.state.playerCards[this.state.playerTurn].filter(card => this.state.cardsOnTable.some(tc => tc.Value === card.Value));
@@ -321,7 +323,7 @@ class Durak {
                 this.state.attackCards = [];
                 break;
             case "take":
-                this.state.attackCards = [];
+                //this.state.attackCards = [];
                 this.state.isTaking = true;
                 this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
                 break;
