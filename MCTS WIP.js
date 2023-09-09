@@ -1,6 +1,5 @@
 //MCTS
 
-
 class MCTSNode {
     constructor(moves, parent) {
         this.moves = moves
@@ -87,10 +86,11 @@ class MCTS {
             this.game.playMove(moves[maxIndex])
 
 
-            root = root.children[maxIndex]
             if (this.game.gameOver()) {
                 return root
             }
+
+            root = root.children[maxIndex]
         }
         return root
     }
