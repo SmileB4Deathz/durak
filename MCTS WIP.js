@@ -432,5 +432,3 @@ class Card {
         return this.Type;
     }
 }
-
-module.exports = { Durak, Card };
