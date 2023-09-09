@@ -234,6 +234,8 @@ class MCTS {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
 class Durak {
 
     constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], deck = [], lowerTrump = null) {
@@ -260,6 +262,8 @@ class Durak {
 
     getTrump() { return this.state.trump }
 
+    endGame() {return this.state.endGame;} 
+
     cloneState() {
         return structuredClone(this.state);
     }
@@ -274,7 +278,7 @@ class Durak {
     moves() {
         let moves = [];
         if (this.state.gameOver)
-            return moves;
+            return ["Game Over"];
         //first attack
         else if (this.state.cardsOnTable.length === 0) {
             moves = this.state.playerCards[this.state.playerTurn];
@@ -428,3 +432,5 @@ class Card {
         return this.Type;
     }
 }
+
+module.exports = { Durak, Card };
