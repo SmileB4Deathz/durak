@@ -228,6 +228,8 @@ class MCTS {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
 class Durak {
 
     constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], deck = [], lowerTrump = null) {
@@ -333,6 +335,7 @@ class Durak {
             default:
                 if (this.state.isTaking) {
                     this.state.cardsOnTable.push(move);
+                    this.state.attackCards.push(move);
                     this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
                     if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.endGame)
                         this.state.gameOver = true;
@@ -346,6 +349,7 @@ class Durak {
                     this.state.gameOver = true;
                     return;
                 }
+
 
                 //multiple attack cards on the table
                 if (this.state.attackCards.length === 0) {
