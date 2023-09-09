@@ -1,5 +1,6 @@
 //MCTS
 
+
 class MCTSNode {
     constructor(moves, parent) {
         this.moves = moves
@@ -38,12 +39,14 @@ class MCTS {
             this.game.setState(clonedState)
 
             let selectedNode = this.selectNode(root)
+
             //if selected node is terminal and we lost, make sure we never choose that move
             if (this.game.gameOver()) {
                 if (this.game.winner() != this.player && this.game.winner() != -1) {
                     selectedNode.parent.wins = Number.MIN_SAFE_INTEGER
                 }
             }
+
             let expandedNode = this.expandNode(selectedNode)
             this.playout(expandedNode)
 
@@ -83,11 +86,11 @@ class MCTS {
             const moves = this.game.moves()
             this.game.playMove(moves[maxIndex])
 
+
+            root = root.children[maxIndex]
             if (this.game.gameOver()) {
                 return root
             }
-
-            root = root.children[maxIndex]
         }
         return root
     }
@@ -109,10 +112,7 @@ class MCTS {
     }
 
     playout() {
-        const iters = 0;
         while (!this.game.gameOver()) {
-            if (iters > 1000)
-                debugger;
             //const moves = this.game.moves()
             //const randomChoice = Math.floor(Math.random() * moves.length)
             const greedy = this.greedyMove();
@@ -216,7 +216,10 @@ class MCTS {
         return this.lowestRankCard(noTrumpCards);
     }
 }
+
 //GAME
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
@@ -274,7 +277,7 @@ class Durak {
         else if (this.state.attackCards.length === 0 || this.state.isTaking) {
             if (this.state.isTaking) {
                 let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
-                if (this.state.attackCards.length >= this.state.playerCards[oppIndex].length)
+                if (this.state.attackCards.length === this.state.playerCards[oppIndex].length)
                     return (["pass"]);
             }
             moves = this.state.playerCards[this.state.playerTurn].filter(card => this.state.cardsOnTable.some(tc => tc.Value === card.Value));
@@ -338,7 +341,7 @@ class Durak {
 
                 this.state.cardsOnTable.push(move);
                 this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
-                if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.endGame) {
+                if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.deck.length === 0) {
                     this.state.winner = this.state.playerTurn;
                     this.state.gameOver = true;
                     return;
