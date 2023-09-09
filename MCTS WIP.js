@@ -1,6 +1,7 @@
 //MCTS
 
 
+
 class MCTSNode {
     constructor(moves, parent) {
         this.moves = moves
@@ -201,26 +202,20 @@ class MCTS {
 
     greedyMove() {
         const moves = this.game.moves();
-        if (moves.length < 2)
+        if (moves.length === 1)
             return moves[0];
-        return this.getGreedyMove()
-    }
 
-    getGreedyMove() {
-        const moves = this.game.moves();
         const cards = moves.filter(card => (typeof card === "object"));
-
         const trump = this.game.getTrump();
         const noTrumpCards = cards.filter(card => card.Type != trump);
-        if (noTrumpCards.length === 0){
-            if (!this.game.endGame())
+        if (noTrumpCards.length === 0) {
+            if (!this.game.endGame() && moves.includes("pass"))
                 return moves[moves.length - 1];
             return this.lowestRankCard(cards);
         }
         return this.lowestRankCard(noTrumpCards);
     }
 }
-
 //GAME
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
