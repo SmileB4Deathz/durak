@@ -88,11 +88,10 @@ class MCTS {
             this.game.playMove(moves[maxIndex])
 
 
+            root = root.children[maxIndex]
             if (this.game.gameOver()) {
                 return root
             }
-
-            root = root.children[maxIndex]
         }
         return root
     }
