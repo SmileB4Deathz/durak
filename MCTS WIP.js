@@ -205,6 +205,9 @@ class MCTS {
             return moves[0];
 
         const cards = moves.filter(card => (typeof card === "object"));
+        const randomChoice = Math.floor(Math.random() * moves.length)
+        if (Math.random() < 0.3)
+            return moves[randomChoice];
         const trump = this.game.getTrump();
         const noTrumpCards = cards.filter(card => card.Type != trump);
         if (noTrumpCards.length === 0) {
