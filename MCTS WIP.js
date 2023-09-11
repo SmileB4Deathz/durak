@@ -207,7 +207,7 @@ class MCTS {
         const cards = moves.filter(card => (typeof card === "object"));
         const randomChoice = Math.floor(Math.random() * moves.length)
         if (Math.random() < 0.3)
-            return moves[randomChoice];
+           return moves[randomChoice];
         const trump = this.game.getTrump();
         const noTrumpCards = cards.filter(card => card.Type != trump);
         if (noTrumpCards.length === 0) {
@@ -233,6 +233,8 @@ class MCTS {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
 class Durak {
 
     constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], deck = [], lowerTrump = null) {
@@ -244,7 +246,7 @@ class Durak {
             attackCards: attackCards,
             deck: deck,
             lowerTrump: lowerTrump,
-            endGame: false,
+            endGame: true,
             winner: -1,
             gameOver: false,
             isTaking: false
@@ -259,7 +261,7 @@ class Durak {
 
     getTrump() { return this.state.trump }
 
-    endGame() {return this.state.endGame;} 
+    endGame() { return this.state.endGame; }
 
     cloneState() {
         return structuredClone(this.state);
@@ -274,8 +276,11 @@ class Durak {
 
     moves() {
         let moves = [];
-        if (this.state.gameOver)
+        if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.deck.length === 0){
+            this.state.winner = this.state.playerTurn;
+            this.state.gameOver = true;
             return ["Game Over"];
+        }   
         //first attack
         else if (this.state.cardsOnTable.length === 0) {
             moves = this.state.playerCards[this.state.playerTurn];
@@ -342,8 +347,10 @@ class Durak {
                     this.state.cardsOnTable.push(move);
                     this.state.attackCards.push(move);
                     this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
-                    if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.endGame)
+                    if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.deck.length === 0){
+                        this.state.winner = this.state.playerTurn;
                         this.state.gameOver = true;
+                    }
                     return;
                 }
 
@@ -411,21 +418,4 @@ class Durak {
         return this.state.gameOver;
     }
     winner() { return this.state.winner }
-}
-
-
-
-class Card {
-    constructor(Value, Type) {
-        this.Value = Value;
-        this.Type = Type;
-    }
-
-    getValue() {
-        return this.Value;
-    }
-
-    getType() {
-        return this.Type;
-    }
 }
