@@ -419,3 +419,276 @@ class Durak {
     }
     winner() { return this.state.winner }
 }
+
+
+
+
+////PEREVODNOI
+
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
+class Durak {
+
+    constructor(playerCards, playerTurn, trump, cardsOnTable, attackCards = [], deck = [], lowerTrump = null, endGame = true) {
+        this.state = {
+            playerCards: playerCards,
+            playerTurn: playerTurn,
+            trump: trump,
+            cardsOnTable: cardsOnTable,
+            attackCards: attackCards,
+            deck: deck,
+            lowerTrump: lowerTrump,
+            endGame: endGame,
+            winner: -1,
+            gameOver: false,
+            isTaking: false
+        }
+    }
+
+    getState() { return this.state }
+
+    setState(state) { this.state = state }
+
+    getPlayerTurn() { return this.state.playerTurn }
+
+    getTrump() { return this.state.trump }
+
+    endGame() { return this.state.endGame; }
+
+    cloneState() {
+        return structuredClone(this.state);
+    }
+
+    static sameCard(c1, c2) {
+        if (c1.Value === c2.Value && c1.Type === c2.Type) {
+            return true;
+        }
+        return false;
+    }
+
+    moves() {
+        let moves = [];
+        if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.deck.length === 0) {
+            this.state.winner = this.state.playerTurn;
+            this.state.gameOver = true;
+            return ["Game Over"];
+        }
+        //first attack
+        const oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+        if (this.state.cardsOnTable.length === 0) {
+            moves = structuredClone(this.state.playerCards[this.state.playerTurn]);
+            const nrOppCards = this.state.playerCards[oppIndex].length;
+            if (nrOppCards > 1)
+                this.#addPairMoves(moves, nrOppCards);
+        }
+        //continue attack
+        else if (this.state.attackCards.length === 0 || this.state.isTaking) {
+            if (this.state.isTaking) {
+                if (this.state.attackCards.length === this.state.playerCards[oppIndex].length)
+                    return (["pass"]);
+            }
+            moves = this.state.playerCards[this.state.playerTurn].filter(card => this.state.cardsOnTable.some(tc => tc.Value === card.Value));
+            moves.push("pass");
+        }
+        //defence
+        else if (this.state.attackCards.length !== 0) {
+            //if attack card is not a trump
+            if (this.state.attackCards[0].Type !== this.state.trump) {
+                for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
+                    let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
+                    let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
+                    if ((cardType === this.state.attackCards[0].Type && cardValue > this.state.attackCards[0].Value) || cardType === this.state.trump) {
+                        moves.push(this.state.playerCards[this.state.playerTurn][i]);
+                    }
+                }
+            }
+            //if attack card is a trump
+            else {
+                for (let i = 0; i < this.state.playerCards[this.state.playerTurn].length; i++) {
+                    let cardType = this.state.playerCards[this.state.playerTurn][i].Type;
+                    let cardValue = this.state.playerCards[this.state.playerTurn][i].Value;
+                    if (cardType === this.state.attackCards[0].Type && cardValue > this.state.attackCards[0].Value)
+                        moves.push(this.state.playerCards[this.state.playerTurn][i]);
+                }
+            }
+
+            //perevod
+            if (this.state.attackCards.length === this.state.cardsOnTable.length && this.state.attackCards.length < this.state.playerCards[oppIndex].length) {
+                const nrOppCards = this.state.playerCards[oppIndex].length;
+                const perevodCards = this.state.playerCards[this.state.playerTurn].filter(card => card.Value == this.state.attackCards[0].Value)
+                if (nrOppCards - this.state.attackCards.length > 1)
+                    this.#addPairMoves(perevodCards, nrOppCards - this.state.attackCards.length);
+                for (let i = 0; i < perevodCards.length; i++)
+                    moves.push({ action: "perevod", card: perevodCards[i] })
+            }
+            moves.push("take");
+        }
+        return moves;
+    }
+
+    playMove(move) {
+        switch (move) {
+            case "pass":
+                if (this.state.isTaking) {
+                    let oppIndex = this.state.playerTurn === 0 ? 1 : 0;
+                    this.state.cardsOnTable.forEach(card => this.state.playerCards[oppIndex].push(card));
+                    this.state.isTaking = false;
+                    this.takeCards(this.state.playerTurn);
+                }
+                else {
+                    this.takeCards(this.state.playerTurn);
+                    this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                }
+                this.state.cardsOnTable = [];
+                this.state.attackCards = [];
+                break;
+            case "take":
+                //this.state.attackCards = [];
+                this.state.isTaking = true;
+                this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                break;
+            default:
+                if (this.state.isTaking) {
+                    this.state.cardsOnTable.push(move);
+                    this.state.attackCards.push(move);
+                    this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
+                    if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.deck.length === 0) {
+                        this.state.winner = this.state.playerTurn;
+                        this.state.gameOver = true;
+                    }
+                    return;
+                }
+
+                if (move.action === "perevod") {
+                    if (Array.isArray(move.card)) {
+                        for (const card of move.card) {
+                            this.state.cardsOnTable.push(card);
+                            this.state.attackCards.push(card);
+                            this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(crd => !Durak.sameCard(crd, card));
+                        }
+                    }
+                    else {
+                        this.state.cardsOnTable.push(move.card);
+                        this.state.attackCards.push(move.card);
+                        this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move.card));
+                    }
+                    this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                    return;
+                }
+
+                this.state.cardsOnTable.push(move);
+                this.state.playerCards[this.state.playerTurn] = this.state.playerCards[this.state.playerTurn].filter(card => !Durak.sameCard(card, move));
+                if (this.state.playerCards[this.state.playerTurn].length === 0 && this.state.deck.length === 0) {
+                    this.state.winner = this.state.playerTurn;
+                    this.state.gameOver = true;
+                    return;
+                }
+
+
+                //multiple attack cards on the table
+                if (this.state.attackCards.length === 0) {
+                    this.state.attackCards.push(move);
+                    this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                    return;
+                }
+                else if (this.state.attackCards.length === 1) {
+                    this.state.attackCards.shift();
+                    this.state.playerTurn = (this.state.playerTurn === 0) ? 1 : 0;
+                    return;
+                }
+                this.state.attackCards.shift();
+                break;
+        }
+    }
+
+    takeCards(first) {
+        if (!first) {
+            if (this.state.playerCards[0].length < 6)
+                take(0, this.state);
+            if (this.state.playerCards[1].length < 6)
+                take(1, this.state);
+            return;
+        }
+
+        if (this.state.playerCards[1].length < 6)
+            take(1, this.state);
+        if (this.state.playerCards[0].length < 6)
+            take(0, this.state);
+
+        function take(player, state) {
+            if (state.endGame)
+                return;
+            const nrCardsToTake = 6 - state.playerCards[player].length;
+            for (let i = 0; i < nrCardsToTake; i++) {
+                if (state.deck.length === 0) {
+                    if (state.lowerTrump == null) {
+                        state.endGame = true;
+                        return;
+                    }
+                    state.deck.push(state.lowerTrump)
+                    state.lowerTrump = null;
+                }
+                //const randomCard = state.deck[Math.floor(Math.random() * state.deck.length)];
+                const randomCard = state.deck[0];
+                state.playerCards[player].push(randomCard);
+                state.deck.shift();
+            }
+        }
+    }
+
+    gameOver() {
+        return this.state.gameOver;
+    }
+    winner() { return this.state.winner }
+
+    #addPairMoves(moves, noc) {
+        function groupCardsByValue(arr) {
+            const cardGroups = {};
+
+            // Iterate through the array and group cards by their values
+            arr.forEach(card => {
+                const { Value } = card;
+                if (!cardGroups[Value]) {
+                    cardGroups[Value] = [];
+                }
+                cardGroups[Value].push(card);
+            });
+
+            // Convert the groups object into an array of arrays
+            const result = Object.values(cardGroups);
+
+            return result;
+        }
+
+        function getSubArrays(arr) {
+            var len = arr.length,
+                subs = Array(Math.pow(2, len)).fill();
+            return subs.map((_, i) => {
+                var j = -1,
+                    k = i,
+                    res = [];
+                while (++j < len) {
+                    k & 1 && res.push(arr[j]);
+                    k = k >> 1;
+                }
+                return res;
+            }).slice(1);
+        }
+        const groups = groupCardsByValue(moves);
+
+        for (const group of groups) {
+            if (group.length === 2) {
+                moves.push(group);
+            }
+            else if (group.length === 3) {
+                const subArrays = getSubArrays(group)
+                for (const subArray of subArrays) {
+                    if (subArray.length >= 2 && subArray.length <= noc) {
+                        moves.push(subArray);
+                    }
+                }
+            }
+        }
+    }
+}
+
